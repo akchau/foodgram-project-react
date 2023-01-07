@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'rest_framework',
     'djoser',
+    'rest_framework_simplejwt.token_blacklist',
 
 ]
 

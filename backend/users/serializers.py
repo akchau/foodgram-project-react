@@ -44,6 +44,29 @@ class GetTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            "email",
             "password",
+            "email",
+        )
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Смена пороля
+    """
+    new_password = serializers.CharField(max_length=200)
+    current_password = serializers.CharField(max_length=200)
+
+
+class CurrentUserSerializer(serializers.ModelSerializer):
+    """
+    Текущий пользователь
+    """
+    class Meta:
+        model = User
+        fields = (
+            "email",
+            "id",
+            "username",
+            "first_name",
+            "last_name",
         )
