@@ -34,3 +34,16 @@ class UsersSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
         )
+
+
+class GetTokenSerializer(serializers.ModelSerializer):
+    """
+    Запрос токена
+    """
+
+    class Meta:
+        model = User
+        fields = (
+            "email",
+            "password",
+        )
