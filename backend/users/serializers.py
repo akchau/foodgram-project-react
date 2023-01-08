@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from .models import Subscribe
+
 User = get_user_model()
 
 
@@ -24,6 +26,7 @@ class UsersSerializer(serializers.ModelSerializer):
     """
     Список пользователей."
     """
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -33,7 +36,14 @@ class UsersSerializer(serializers.ModelSerializer):
             "username",
             "first_name",
             "last_name",
+            "is_subscribed",
         )
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get("request")
+        print("Проверяем подписку")
+        return Subscribe.objects.filter(
+            follower=request.user, following=obj).exists()
 
 
 class GetTokenSerializer(serializers.ModelSerializer):
