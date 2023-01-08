@@ -1,13 +1,20 @@
 from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework import status
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework import viewsets, status, mixins
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import AccessToken
 
+
+from .exceptions import (
+    UserNotFound,
+    NotFollower,
+    AlreadyFollower,
+    IncorrectPassword,
+)
 
 from .models import Subscribe
 from .serializers import (
@@ -43,15 +50,46 @@ def get_response(key):
     return JSONRenderer().render(keys[key])
 
 
-@api_view(['POST', 'GET'])
-@permission_classes([AllowAny])
-def users_view(request):
-    """
-    POST - регистрация пользователей
-    GET - получение списка прользователей
-    """
-    if request.method == "POST":
-        serializer = RegistrationSerializer(data=request.data)
+class UserViewSet(viewsets.GenericViewSet,
+                  mixins.ListModelMixin,
+                  mixins.CreateModelMixin,
+                  mixins.RetrieveModelMixin):
+    queryset = User.objects.all()
+    serializer_class = UsersSerializer
+
+    @action(
+        detail=False,
+    )
+    def me(sefl, request):
+        username = request.user.username
+        user = get_object_or_404(User, username=username)
+        serializer = UsersSerializer(
+            user,
+            context={'request': request}
+        )
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+    )
+    def subscriptions(self, request):
+        """Подписки пользователя."""
+        followings = User.objects.filter(follower__follower=request.user)
+        page = self.paginate_queryset(followings)
+        if page is not None:
+            serializer = UsersSerializer(
+                page,
+                many=True,
+                context={'request': request}
+            )
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(
+            followings, many=True, context={'request': request}
+        )
+        return Response(serializer.data)
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         password = serializer.validated_data['password']
@@ -60,13 +98,41 @@ def users_view(request):
         user.set_password(password)
         user.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
-    users = User.objects.all()
-    serializer = UsersSerializer(
-        users,
-        many=True,
-        context={'request': request}
-    )
-    return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(
+                page,
+                many=True,
+                context={'request': request}
+            )
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(
+            queryset, many=True, context={'request': request}
+        )
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+            serializer = UsersSerializer(user, context={'request': request})
+        except User.DoesNotExist:
+            raise UserNotFound
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return RegistrationSerializer
+        return UsersSerializer
+
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'create':
+            return (AllowAny(),)
+        return super().get_permissions()
 
 
 @api_view(['POST'])
@@ -91,7 +157,6 @@ def token_view(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
 def set_password(request):
     """
     Функция изменения пароля
@@ -105,62 +170,32 @@ def set_password(request):
         user.set_password(new_password)
         user.save()
         return Response(password_serializer.data, status.HTTP_204_NO_CONTENT)
-    return Response(
-            {"detail": "Учетные данные не были предоставлены."},
-            status.HTTP_401_UNAUTHORIZED
-    )
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def current_user(request):
-    serializer = UsersSerializer(request.user, context={'request': request})
-    return Response(serializer.data, status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def profile(request, id):
-    user = get_object_or_404(User, pk=id)
-    serializer = UsersSerializer(user, context={'request': request})
-    return Response(serializer.data, status.HTTP_200_OK)
+    raise IncorrectPassword
 
 
 @api_view(['POST', 'DELETE'])
-@permission_classes([AllowAny])
 def subscribe(request, id):
     """Функция подписки на пользователя"""
-
     try:
         following = User.objects.get(pk=id)
     except User.DoesNotExist:
-        return Response(get_response("not_found"), status.HTTP_404_NOT_FOUND)
-
-    if not request.user.is_authenticated:
-        return Response(
-            get_response("not_authenticated"),
-            status.HTTP_401_UNAUTHORIZED
-        )
-    follower = request.user
+        raise UserNotFound
 
     if request.method == "DELETE":
         try:
             obj = Subscribe.objects.get(
-                follower=follower,
+                follower=request.user,
                 following=following,
             )
             obj.delete()
             return Response(status.HTTP_204_NO_CONTENT)
         except Subscribe.DoesNotExist:
-            return Response(
-                get_response("not_follower"),
-                status.HTTP_400_BAD_REQUEST
-            )
+            raise NotFollower
 
     elif request.method == "POST":
         try:
             Subscribe.objects.create(
-                follower=follower,
+                follower=request.user,
                 following=following,
             )
             serializer = UsersSerializer(
@@ -169,25 +204,4 @@ def subscribe(request, id):
             )
             return Response(serializer.data, status.HTTP_201_CREATED)
         except IntegrityError:
-            return Response(
-                get_response("already_follower"),
-                status.HTTP_400_BAD_REQUEST
-            )
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def my_subscriptions(request):
-    """Подписки пользователя."""
-    if not request.user.is_authenticated:
-        return Response(
-            get_response("not_authenticated"),
-            status.HTTP_401_UNAUTHORIZED
-        )
-    followings = User.objects.filter(follower__follower=request.user)
-    serializer = UsersSerializer(
-        followings,
-        many=True,
-        context={'request': request}
-    )
-    return Response(serializer.data, status.HTTP_200_OK)
+            raise AlreadyFollower

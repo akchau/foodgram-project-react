@@ -1,22 +1,21 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import SimpleRouter
 
 from .views import (
-    users_view,
     token_view,
     set_password,
-    current_user,
-    profile,
     subscribe,
-    my_subscriptions,
+    UserViewSet
 )
 app_name = 'users'
 
+router = SimpleRouter()
+router.register(r'users', UserViewSet)
+
+
 urlpatterns = [
-    path('', users_view),
     path('login/', token_view),
-    path('set_password/', set_password),
-    path('me/', current_user),
-    path('<int:id>/subscribe/', subscribe),
-    path('<int:id>/', profile),
-    path('subscriptions/', my_subscriptions)
+    path('users/set_password/', set_password),
+    path('users/<int:id>/subscribe/', subscribe),
+    path(r'', include(router.urls)),
 ]

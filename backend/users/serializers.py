@@ -8,14 +8,17 @@ User = get_user_model()
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """
-    Сериализатор для регистрации."
+    Сериализатор для регистрации
     """
+    id = serializers.IntegerField(source='pk', required=False)
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
         fields = (
             "username",
             "password",
+            "id",
             "email",
             "first_name",
             "last_name",
@@ -24,53 +27,11 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 class UsersSerializer(serializers.ModelSerializer):
     """
-    Список пользователей."
+    Список пользователей
     """
+    id = serializers.IntegerField(source='pk')
     is_subscribed = serializers.SerializerMethodField()
 
-    class Meta:
-        model = User
-        fields = (
-            "email",
-            "pk",
-            "username",
-            "first_name",
-            "last_name",
-            "is_subscribed",
-        )
-
-    def get_is_subscribed(self, obj):
-        request = self.context.get("request")
-        print("Проверяем подписку")
-        return Subscribe.objects.filter(
-            follower=request.user, following=obj).exists()
-
-
-class GetTokenSerializer(serializers.ModelSerializer):
-    """
-    Запрос токена
-    """
-
-    class Meta:
-        model = User
-        fields = (
-            "password",
-            "email",
-        )
-
-
-class ChangePasswordSerializer(serializers.Serializer):
-    """
-    Смена пороля
-    """
-    new_password = serializers.CharField(max_length=200)
-    current_password = serializers.CharField(max_length=200)
-
-
-class CurrentUserSerializer(serializers.ModelSerializer):
-    """
-    Текущий пользователь
-    """
     class Meta:
         model = User
         fields = (
@@ -79,4 +40,29 @@ class CurrentUserSerializer(serializers.ModelSerializer):
             "username",
             "first_name",
             "last_name",
+            "is_subscribed",
         )
+
+    def get_is_subscribed(self, obj):
+        """Метод добавляет поле is_subscribed в ответ."""
+        request = self.context.get("request")
+        if request.user.is_authenticated:
+            return Subscribe.objects.filter(
+                follower=request.user, following=obj).exists()
+        return False
+
+
+class GetTokenSerializer(serializers.Serializer):
+    """
+    Запрос токена
+    """
+    email = serializers.EmailField()
+    password = serializers.CharField(max_length=150)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Смена пороля
+    """
+    new_password = serializers.CharField(max_length=150)
+    current_password = serializers.CharField(max_length=150)
