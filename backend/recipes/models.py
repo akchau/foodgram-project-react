@@ -16,7 +16,17 @@ class Ingridient(models.Model):
 
 
 class Tag(models.Model):
-    pass
+    name = models.CharField(
+        "Название",
+        max_length=50
+    )
+    color = models.CharField(
+        "Цвет тега",
+        max_length=10,
+    )
+    slug = models.SlugField(
+        "slug-тега",
+    )
 
 
 class Recipe(models.Model):
@@ -24,11 +34,16 @@ class Recipe(models.Model):
         User,
         on_delete=models.SET_NULL,
         related_name="recipes",
+        null=True
     )
     name = models.CharField(max_length=200)
     text = models.TextField()
     cooking_time = models.IntegerField()
-    image = models.ImageField()
+#    image = models.ImageField(
+#         "Картинка",
+#         upload_to='recipes',
+#         blank=True,
+#     )
 
     @property
     def is_favorited(self, request):
@@ -48,28 +63,40 @@ class Recipe(models.Model):
 class TagRecipe(models.Model):
     tag = models.ForeignKey(
         Tag,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name="recipes",
     )
     recipe = models.ForeignKey(
         Recipe,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name="tags",
     )
 
 
 class IngridientRecipe(models.Model):
     ingridient = models.ForeignKey(
-        Tag,
-        on_delete=models.SET_NULL,
+        Ingridient,
+        on_delete=models.CASCADE,
         related_name="recipes",
     )
     recipe = models.ForeignKey(
         Recipe,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name="ingridients",
     )
     amount = models.IntegerField()
+
+    @property
+    def id(self):
+        return self.ingridient.pk
+
+    @property
+    def measurement_unit(self):
+        return self.ingridient.measurement_unit
+
+    @property
+    def name(self):
+        return self.ingridient.name
 
 
 class UserFavoriteRecipes(models.Model):
