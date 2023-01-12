@@ -32,9 +32,8 @@ class Tag(models.Model):
 class Recipe(models.Model):
     author = models.ForeignKey(
         User,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name="recipes",
-        null=True
     )
     name = models.CharField(max_length=200)
     text = models.TextField()
@@ -110,6 +109,9 @@ class UserFavoriteRecipes(models.Model):
         on_delete=models.CASCADE,
         related_name="recipe_favorite",
     )
+
+    class Meta:
+        unique_together = ('recipe', 'user')
 
 
 class UserShoppingCartRecipes(models.Model):

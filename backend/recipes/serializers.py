@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Ingridient, Tag, Recipe, IngridientRecipe
+from .models import Ingridient, Tag, Recipe, IngridientRecipe, UserFavoriteRecipes, UserShoppingCartRecipes
 from users.serializers import UsersSerializer
 
 
@@ -59,20 +59,26 @@ class RecipeSerializer(serializers.ModelSerializer):
     """
     id = serializers.IntegerField(source='pk', required=False)
     author = UsersSerializer(read_only=True, many=False)
-    ingridients = serializers.SerializerMethodField()
-    
+    # ingridients = IngridientInRecipeSerializer(read_only=True, many=True)
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
     class Meta:
         model = Recipe
         fields = (
             "id",
-            "name",
+            
             "author",
-            "ingridients",
+            # "ingridients",
+
+            "is_favorited",
+            "is_in_shopping_cart",
             "name",
             "text",
             "cooking_time",
         )
 
-    def get_ingridients(self, obj):
-        ingridients = IngridientRecipe.objects.filter(recipe=obj)
-        return IngridientInRecipeSerializer(ingridients, read_only=True, many=True)
+    def get_is_favorited(self, obj):
+        return UserFavoriteRecipes.objects.filter(user=obj.author).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        return UserShoppingCartRecipes.objects.filter(user=obj.author).exists()

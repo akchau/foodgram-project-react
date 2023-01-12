@@ -11,13 +11,13 @@ class UserNotFound(NotFound):
 class NotFollower(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = 'Вы не подписаны.'
-    default_code = 'not_follower'
+    default_code = 'errors'
 
 
 class AlreadyFollower(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = 'Вы уже подписаны.'
-    default_code = 'already_follower'
+    default_code = 'errors'
 
 
 class IncorrectPassword(APIException):
