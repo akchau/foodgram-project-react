@@ -85,6 +85,9 @@ class IngridientRecipe(models.Model):
     )
     amount = models.IntegerField()
 
+    class Meta:
+        unique_together = ('ingridient', 'recipe')
+
     @property
     def id(self):
         return self.ingridient.pk
