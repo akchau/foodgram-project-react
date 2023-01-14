@@ -24,6 +24,11 @@ class SubscribeInline(admin.TabularInline):
     model._meta.verbose_name_plural = 'Подписки пользователя'
 
 
+@admin.action(description='Блокировать пользователей')
+def blocked(modeladmin, request, queryset):
+    queryset.update(is_active=False)
+
+
 class UserAdmin(admin.ModelAdmin):
     inlines = [FollowerInline, SubscribeInline]
     empty_value_display = '-empty-'
@@ -40,7 +45,13 @@ class UserAdmin(admin.ModelAdmin):
         'email',
         'first_name',
         'last_name',
+        "password",
     )
+    list_filter = ('username', 'email',)
+    actions = [blocked]
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 class SubscribeAdmin(admin.ModelAdmin):

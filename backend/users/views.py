@@ -148,10 +148,15 @@ def token_view(request):
     email = user_serializer.validated_data['email']
     password = user_serializer.validated_data['password']
     user = get_object_or_404(User, email=email)
-    if user.check_password(password):
+    if user.check_password(password) and user.is_active:
         token = AccessToken.for_user(user)
         return Response({"auth_token": str(token)}, status.HTTP_200_OK)
     else:
+        if not user.is_active:
+            return Response(
+                {"auth_error": 'Выдача токена запрещена'},
+                status.HTTP_403_FORBIDDEN
+        )
         return Response(
             {"auth_error": 'Неверный пароль'},
             status.HTTP_403_FORBIDDEN

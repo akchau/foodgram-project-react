@@ -31,23 +31,30 @@ class TagAdmin(admin.ModelAdmin):
 
 class IngridientAdmin(admin.ModelAdmin):
     empty_value_display = '-empty-'
-    list_display = ('pk', 'name', 'measurement_unit')
+    list_display = ('name', 'measurement_unit')
     search_fields = ('name',)
-    list_filter = ('measurement_unit', )
+    list_filter = ('name', )
 
 
 class RecipeAdmin(admin.ModelAdmin):
     empty_value_display = '-empty-'
     inlines = [IngridientRecipeInline, TagRecipeInline]
     list_display = (
-        'pk',
-        'author',
         'name',
-        'text',
-        'cooking_time',
+        'author',
     )
+    fields = (
+        "author",
+        "name",
+        "text",
+        "cooking_time",
+        "recipe_in_favorite",
+        )
     search_fields = ('name',)
-    list_filter = ('tags',)
+    list_filter = ('author', 'name', 'tags',)
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 admin.site.register(Tag, TagAdmin)
