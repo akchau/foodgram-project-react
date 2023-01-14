@@ -18,6 +18,10 @@ class User(AbstractUser):
     password = models.CharField('password', max_length=150)
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
 
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+
 
 class Subscribe(models.Model):
     follower = models.ForeignKey(
@@ -33,3 +37,5 @@ class Subscribe(models.Model):
 
     class Meta:
         unique_together = ('follower', 'following')
+        verbose_name = "Подписка"
+        verbose_name_plural = "Подписки"

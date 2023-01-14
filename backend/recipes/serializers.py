@@ -1,6 +1,13 @@
 from rest_framework import serializers
-
-from .models import Ingridient, Tag, Recipe, IngridientRecipe, UserFavoriteRecipes, UserShoppingCartRecipes
+from .models import (
+    Ingridient,
+    Tag,
+    Recipe,
+    IngridientRecipe,
+    UserFavoriteRecipes,
+    UserShoppingCartRecipes,
+    TagRecipe
+)
 from users.serializers import UsersSerializer
 
 
@@ -41,7 +48,10 @@ class TagSerializer(serializers.ModelSerializer):
     """
     Сериализатор ингридиента
     """
-    id = serializers.IntegerField(source='pk', required=False)
+    id = serializers.IntegerField(
+        source='pk',
+        read_only=True
+    )
 
     class Meta:
         model = Tag
@@ -59,17 +69,17 @@ class RecipeSerializer(serializers.ModelSerializer):
     """
     id = serializers.IntegerField(source='pk', required=False)
     author = UsersSerializer(read_only=True, many=False)
-    # ingridients = IngridientInRecipeSerializer(read_only=True, many=True)
+    ingridients = IngridientSerializer(read_only=True, many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+
     class Meta:
         model = Recipe
         fields = (
             "id",
-            
             "author",
-            # "ingridients",
-
+            "tags",
+            "ingridients",
             "is_favorited",
             "is_in_shopping_cart",
             "name",
@@ -82,3 +92,18 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_is_in_shopping_cart(self, obj):
         return UserShoppingCartRecipes.objects.filter(user=obj.author).exists()
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        author = request.user
+        
+
+        return Recipe(
+            author=author,
+            name=validated_data.get('name'),
+            text=validated_data.get('text'),
+            cooking_time=validated_data.get('cooking_time'),
+        )
+
+    def update(self, instance, validated_data):
+        return instance

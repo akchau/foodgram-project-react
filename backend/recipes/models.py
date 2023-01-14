@@ -7,26 +7,45 @@ User = get_user_model()
 class Ingridient(models.Model):
     name = models.CharField(
         "Название",
-        max_length=200
+        max_length=200,
+        unique=True,
     )
     measurement_unit = models.CharField(
         "Еденица измерения",
         max_length=10
     )
 
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Ингридиент"
+        verbose_name_plural = "Ингридиенты"
+
 
 class Tag(models.Model):
     name = models.CharField(
         "Название",
-        max_length=50
+        max_length=50,
+        unique=True,
     )
     color = models.CharField(
         "Цвет тега",
         max_length=10,
+        unique=True,
     )
     slug = models.SlugField(
         "slug-тега",
+        unique=True,
     )
+
+    class Meta:
+        unique_together = ('name', 'slug')
+        verbose_name = "Тег"
+        verbose_name_plural = "Теги"
+
+    def __str__(self):
+        return self.name
 
 
 class Recipe(models.Model):
@@ -43,6 +62,18 @@ class Recipe(models.Model):
 #         upload_to='recipes',
 #         blank=True,
 #     )
+    tags = models.ManyToManyField(Tag, through='TagRecipe')
+    ingridients = models.ManyToManyField(
+        Ingridient,
+        through='IngridientRecipe'
+    )
+
+    class Meta:
+        verbose_name = "Рецепт"
+        verbose_name_plural = "Рецепты"
+
+    def __str__(self):
+        return self.name
 
     @property
     def is_favorited(self, request):
@@ -63,42 +94,39 @@ class TagRecipe(models.Model):
     tag = models.ForeignKey(
         Tag,
         on_delete=models.CASCADE,
-        related_name="recipes",
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name="tags",
     )
+
+    def __str__(self):
+        return f'{self.tag.name}-{self.recipe.name}'
+
+    class Meta:
+        verbose_name = "Тег рецепта"
+        verbose_name_plural = "Теги рецептов"
+        unique_together = ('tag', 'recipe')
 
 
 class IngridientRecipe(models.Model):
     ingridient = models.ForeignKey(
         Ingridient,
         on_delete=models.CASCADE,
-        related_name="recipes",
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name="ingridients",
     )
-    amount = models.IntegerField()
+    amount = models.SmallIntegerField()
 
     class Meta:
         unique_together = ('ingridient', 'recipe')
+        verbose_name = "Ингридиент в рецепте"
+        verbose_name_plural = "Ингридиенты в рецептах"
 
-    @property
-    def id(self):
-        return self.ingridient.pk
-
-    @property
-    def measurement_unit(self):
-        return self.ingridient.measurement_unit
-
-    @property
-    def name(self):
-        return self.ingridient.name
+    def __str__(self):
+        return f'{self.recipe}/{self.ingridient} {self.amount} {self.ingridient.measurement_unit}'
 
 
 class UserFavoriteRecipes(models.Model):
@@ -115,6 +143,11 @@ class UserFavoriteRecipes(models.Model):
 
     class Meta:
         unique_together = ('recipe', 'user')
+        verbose_name = "Рецепт в избранном"
+        verbose_name_plural = "Рецепты в избранном"
+
+    def __str__(self):
+        return self.recipe.name
 
 
 class UserShoppingCartRecipes(models.Model):
@@ -128,3 +161,10 @@ class UserShoppingCartRecipes(models.Model):
         on_delete=models.CASCADE,
         related_name="recipe_shopping",
     )
+
+    class Meta:
+        verbose_name = "Рецепт в корзине"
+        verbose_name_plural = "Рецепты в корзине"
+
+    def __str__(self):
+        return f'Рецепт - {self.recipe} в корзине у {self.user}'
