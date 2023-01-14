@@ -23,12 +23,6 @@ class TagRecipeInline(admin.TabularInline):
     fields = ('tag',)
 
 
-class IngridientRecipeInline(admin.TabularInline):
-    model = IngridientRecipe
-    min_num = 1
-    fields = ('ingridient', 'amount')
-
-
 class TagAdmin(admin.ModelAdmin):
     empty_value_display = '-empty-'
     list_display = ('pk', 'name', 'color', 'slug')

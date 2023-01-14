@@ -6,7 +6,6 @@ from .models import (
     IngridientRecipe,
     UserFavoriteRecipes,
     UserShoppingCartRecipes,
-    TagRecipe
 )
 from users.serializers import UsersSerializer
 
@@ -96,8 +95,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get("request")
         author = request.user
-        
-
         return Recipe(
             author=author,
             name=validated_data.get('name'),
