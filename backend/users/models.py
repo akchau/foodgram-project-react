@@ -29,7 +29,7 @@ class User(AbstractUser):
 
 
 class Subscribe(models.Model):
-    user = models.ForeignKey(
+    follower = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name="Подписчик"
@@ -37,12 +37,12 @@ class Subscribe(models.Model):
     following = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="follower",
-        verbose_name="Подписка"
+        verbose_name="Подписка",
+        related_name="follower"
     )
 
     class Meta:
-        unique_together = ('user', 'following')
+        unique_together = ('follower', 'following')
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
 

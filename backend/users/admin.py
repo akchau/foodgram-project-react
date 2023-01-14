@@ -9,7 +9,7 @@ User = get_user_model()
 class FollowerInline(admin.TabularInline):
     model = Subscribe
     min_num = 1
-    fields = ('following', 'user')
+    fields = ('follower',)
     fk_name = "following"
     model._meta.verbose_name = 'Подписчик'
     model._meta.verbose_name_plural = 'Подписчики'
@@ -19,7 +19,7 @@ class SubscribeInline(admin.TabularInline):
     model = Subscribe
     min_num = 1
     fields = ('following',)
-    fk_name = "user"
+    fk_name = "follower"
     model._meta.verbose_name = 'Подписка пользователя'
     model._meta.verbose_name_plural = 'Подписки пользователя'
 
@@ -47,7 +47,7 @@ class SubscribeAdmin(admin.ModelAdmin):
     empty_value_display = '-empty-'
     list_display = (
         'pk',
-        'user',
+        'follower',
         'following',
     )
 

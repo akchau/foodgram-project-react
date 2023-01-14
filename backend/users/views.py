@@ -23,6 +23,8 @@ from .serializers import (
     GetTokenSerializer,
     ChangePasswordSerializer,
 )
+from recipes.serializers import SubscriptionsSerializers
+
 
 User = get_user_model()
 
@@ -74,16 +76,16 @@ class UserViewSet(viewsets.GenericViewSet,
     )
     def subscriptions(self, request):
         """Подписки пользователя."""
-        followings = User.objects.filter(follower__follower=request.user)
+        followings = User.objects.filter(following=request.user)
         page = self.paginate_queryset(followings)
         if page is not None:
-            serializer = UsersSerializer(
+            serializer = SubscriptionsSerializers(
                 page,
                 many=True,
                 context={'request': request}
             )
             return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(
+        serializer = SubscriptionsSerializers(
             followings, many=True, context={'request': request}
         )
         return Response(serializer.data)

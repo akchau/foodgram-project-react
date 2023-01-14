@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import (
     Ingridient,
@@ -8,6 +9,8 @@ from .models import (
     UserShoppingCartRecipes,
 )
 from users.serializers import UsersSerializer
+
+User = get_user_model()
 
 
 class IngridientSerializer(serializers.ModelSerializer):
@@ -104,3 +107,31 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         return instance
+
+
+class CompactRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='pk', required=False)
+
+    class Meta:
+        model = Recipe
+        fields = (
+            "id",
+            "name",
+            "cooking_time",
+        )
+
+
+class SubscriptionsSerializers(UsersSerializer):
+    recipes = CompactRecipeSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = User
+        fields = (
+            "email",
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "is_subscribed",
+            "recipes"
+        )
