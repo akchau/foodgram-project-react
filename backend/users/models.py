@@ -1,5 +1,9 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+
+User = get_user_model
 
 
 class User(AbstractUser):
@@ -16,6 +20,7 @@ class User(AbstractUser):
     first_name = models.CharField('first name', max_length=150)
     last_name = models.CharField('last name', max_length=150)
     password = models.CharField('password', max_length=150)
+    following = models.ManyToManyField('self', through='Subscribe')
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
 
     class Meta:
@@ -24,18 +29,22 @@ class User(AbstractUser):
 
 
 class Subscribe(models.Model):
-    follower = models.ForeignKey(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="following",
+        verbose_name="Подписчик"
     )
     following = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="follower",
+        verbose_name="Подписка"
     )
 
     class Meta:
-        unique_together = ('follower', 'following')
+        unique_together = ('user', 'following')
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
+
+    def __str__(self):
+        return self.following.username

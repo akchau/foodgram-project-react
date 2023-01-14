@@ -26,11 +26,14 @@ class TagRecipeInline(admin.TabularInline):
 class TagAdmin(admin.ModelAdmin):
     empty_value_display = '-empty-'
     list_display = ('pk', 'name', 'color', 'slug')
+    search_fields = ('name', 'slug')
 
 
 class IngridientAdmin(admin.ModelAdmin):
     empty_value_display = '-empty-'
     list_display = ('pk', 'name', 'measurement_unit')
+    search_fields = ('name',)
+    list_filter = ('measurement_unit', )
 
 
 class RecipeAdmin(admin.ModelAdmin):
@@ -41,8 +44,10 @@ class RecipeAdmin(admin.ModelAdmin):
         'author',
         'name',
         'text',
-        'cooking_time'
+        'cooking_time',
     )
+    search_fields = ('name',)
+    list_filter = ('tags',)
 
 
 admin.site.register(Tag, TagAdmin)

@@ -53,14 +53,14 @@ class Recipe(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name="recipes",
+        verbose_name="Автор публикации"
     )
-    name = models.CharField(max_length=200)
-    text = models.TextField()
-    cooking_time = models.IntegerField()
+    name = models.CharField("Название", max_length=200)
+    text = models.TextField("Текстовое описание")
+    cooking_time = models.IntegerField("Время готовки")
 #    image = models.ImageField(
 #         "Картинка",
 #         upload_to='recipes',
-#         blank=True,
 #     )
     tags = models.ManyToManyField(Tag, through='TagRecipe')
     ingridients = models.ManyToManyField(
@@ -104,8 +104,8 @@ class TagRecipe(models.Model):
         return f'{self.tag.name}-{self.recipe.name}'
 
     class Meta:
-        verbose_name = "Тег рецепта"
-        verbose_name_plural = "Теги рецептов"
+        verbose_name = "Тег в рецепте"
+        verbose_name_plural = "Теги в рецепте"
         unique_together = ('tag', 'recipe')
 
 
@@ -113,12 +113,14 @@ class IngridientRecipe(models.Model):
     ingridient = models.ForeignKey(
         Ingridient,
         on_delete=models.CASCADE,
+        verbose_name="Ингридиент"
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        verbose_name="Рецепт"
     )
-    amount = models.SmallIntegerField()
+    amount = models.SmallIntegerField("Количество")
 
     class Meta:
         unique_together = ('ingridient', 'recipe')
@@ -126,7 +128,8 @@ class IngridientRecipe(models.Model):
         verbose_name_plural = "Ингридиенты в рецептах"
 
     def __str__(self):
-        return f'{self.recipe}/{self.ingridient} {self.amount} {self.ingridient.measurement_unit}'
+        return (f'{self.recipe}/{self.ingridient} '
+                f'{self.amount} {self.ingridient.measurement_unit}')
 
 
 class UserFavoriteRecipes(models.Model):
