@@ -10,7 +10,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
     """
     Сериализатор для регистрации
     """
-    id = serializers.IntegerField(source='pk', required=False)
+    id = serializers.ReadOnlyField(source='pk')
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -29,7 +29,7 @@ class UsersSerializer(serializers.ModelSerializer):
     """
     Список пользователей
     """
-    id = serializers.IntegerField(source='pk')
+    id = serializers.ReadOnlyField(source='pk')
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:

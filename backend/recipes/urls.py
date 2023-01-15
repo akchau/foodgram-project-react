@@ -8,7 +8,6 @@ from .views import (
     RecipeViewSet,
     IngridientViewSet,
     TagViewSet,
-    download_shopping_cart,
 )
 
 app_name = 'recipes'
@@ -19,7 +18,6 @@ router.register(r'ingredients', IngridientViewSet)
 router.register(r'tags', TagViewSet)
 
 urlpatterns = [
-    path('recipes/download_shopping_cart/', download_shopping_cart),
     path(r'', include(router.urls)),
 ]
 

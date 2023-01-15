@@ -17,7 +17,7 @@ class IngridientSerializer(serializers.ModelSerializer):
     """
     Сериализатор ингридиента
     """
-    id = serializers.IntegerField(source='pk', required=False)
+    id = serializers.ReadOnlyField(source='pk')
 
     class Meta:
         model = Ingridient
@@ -32,9 +32,9 @@ class IngridientInRecipeSerializer(serializers.ModelSerializer):
     """
     Сериализатор ингридиента в рецепте.
     """
-    id = serializers.Field()
-    name = serializers.Field()
-    measurement_unit = serializers.Field()
+    id = serializers.ReadOnlyField(source='ingridient.pk')
+    name = serializers.Field(source='ingridient.name')
+    measurement_unit = serializers.Field(source='ingridient.measurement_unit')
 
     class Meta:
         model = IngridientRecipe
@@ -50,10 +50,7 @@ class TagSerializer(serializers.ModelSerializer):
     """
     Сериализатор ингридиента
     """
-    id = serializers.IntegerField(
-        source='pk',
-        read_only=True
-    )
+    id = serializers.ReadOnlyField(source='pk')
 
     class Meta:
         model = Tag
@@ -69,9 +66,9 @@ class RecipeSerializer(serializers.ModelSerializer):
     """
     Сериализатор рецепта.
     """
-    id = serializers.IntegerField(source='pk', required=False)
+    id = serializers.ReadOnlyField(source='pk')
     author = UsersSerializer(read_only=True, many=False)
-    ingridients = IngridientSerializer(read_only=True, many=True)
+    ingridients = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -88,6 +85,11 @@ class RecipeSerializer(serializers.ModelSerializer):
             "text",
             "cooking_time",
         )
+
+    def get_ingridients(self, obj):
+        qset = IngridientRecipe.objects.filter(recipe=obj)
+        serializer = IngridientInRecipeSerializer(qset, many=True)
+        return serializer.data
 
     def get_is_favorited(self, obj):
         return UserFavoriteRecipes.objects.filter(user=obj.author).exists()
@@ -110,7 +112,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class CompactRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='pk', required=False)
+    id = serializers.ReadOnlyField(source='pk')
 
     class Meta:
         model = Recipe
