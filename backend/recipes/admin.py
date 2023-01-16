@@ -48,13 +48,14 @@ class RecipeAdmin(admin.ModelAdmin):
         "name",
         "text",
         "cooking_time",
-        "recipe_in_favorite",
         )
     search_fields = ('name',)
     list_filter = ('author', 'name', 'tags',)
 
+    """
     def has_add_permission(self, request, obj=None):
         return False
+    """
 
 
 admin.site.register(Tag, TagAdmin)

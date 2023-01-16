@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from django.db.utils import IntegrityError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
@@ -7,7 +8,7 @@ from rest_framework.response import Response
 
 from .exceptions import NotFavorite, AlreadyFavorite, NotRules, NotInCart
 from .models import Tag, Ingridient, Recipe, UserFavoriteRecipes, UserShoppingCartRecipes, IngridientRecipe
-from .serializers import TagSerializer, IngridientSerializer, RecipeSerializer, IngridientInRecipeSerializer
+from .serializers import TagSerializer, IngridientSerializer, RecipeSerializer, IngridientInRecipeSerializer, ShoppingCartSerializer
 
 User = get_user_model()
 
@@ -100,8 +101,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         recipes = Recipe.objects.filter(users_shopping__user=request.user)
-        ingridients = IngridientRecipe.objects.filter(recipe__in=recipes)
-        return Response(IngridientInRecipeSerializer(ingridients, many=True).data)
+        ingridients = Ingridient.objects.filter(
+            recipe__in=recipes).annotate(
+                sum_amount=Sum('ingridientrecipe__amount')
+            )
+        serializer = ShoppingCartSerializer(ingridients, many=True)
+        return Response(serializer.data)
 
 
 class IngridientViewSet(viewsets.ReadOnlyModelViewSet):

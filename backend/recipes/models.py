@@ -58,10 +58,10 @@ class Recipe(models.Model):
     name = models.CharField("Название", max_length=200)
     text = models.TextField("Текстовое описание")
     cooking_time = models.IntegerField("Время готовки")
-#    image = models.ImageField(
-#         "Картинка",
-#         upload_to='recipes',
-#     )
+    image = models.ImageField(
+        "Картинка",
+        upload_to='recipes',
+    )
     tags = models.ManyToManyField(Tag, through='TagRecipe')
     ingridients = models.ManyToManyField(
         Ingridient,

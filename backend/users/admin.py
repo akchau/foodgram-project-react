@@ -29,6 +29,11 @@ def blocked(modeladmin, request, queryset):
     queryset.update(is_active=False)
 
 
+@admin.action(description='Разблокировать пользователей')
+def unblocked(modeladmin, request, queryset):
+    queryset.update(is_active=True)
+
+
 class UserAdmin(admin.ModelAdmin):
     inlines = [FollowerInline, SubscribeInline]
     empty_value_display = '-empty-'
@@ -48,7 +53,7 @@ class UserAdmin(admin.ModelAdmin):
         "password",
     )
     list_filter = ('username', 'email',)
-    actions = [blocked]
+    actions = [blocked, unblocked]
 
     def has_change_permission(self, request, obj=None):
         return False
