@@ -48,7 +48,7 @@ class RecipeAdmin(admin.ModelAdmin):
         "name",
         "text",
         "cooking_time",
-        )
+    )
     search_fields = ('name',)
     list_filter = ('author', 'name', 'tags',)
 

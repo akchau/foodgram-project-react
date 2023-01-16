@@ -36,9 +36,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if (
-            self.action == 'create' or
-            self.action == 'partial_update' or
-            self.action == 'update'
+            self.action == 'create'
+            or self.action == 'partial_update'
+            or self.action == 'update'
         ):
             return RecipeWriteSerializer
         return RecipeSerializer
@@ -131,7 +131,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ingredients = Ingredient.objects.filter(
             recipe__in=recipes).annotate(
                 sum_amount=Sum('ingredientrecipe__amount')
-            )
+        )
         user = request.user
         filename = f'{user.username}_buy_list.txt'
         shopping_list = (
