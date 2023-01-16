@@ -62,7 +62,7 @@ class UserViewSet(viewsets.GenericViewSet,
     @action(
         detail=False,
     )
-    def me(sefl, request):
+    def me(self, request):
         username = request.user.username
         user = get_object_or_404(User, username=username)
         serializer = UsersSerializer(
