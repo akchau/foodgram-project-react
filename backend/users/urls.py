@@ -17,5 +17,5 @@ urlpatterns = [
     path('auth/token/login/', token_view),
     path('users/set_password/', set_password),
     path('users/<int:id>/subscribe/', subscribe),
-    path(r'', include(router.urls)),
+    path('', include(router.urls)),
 ]
