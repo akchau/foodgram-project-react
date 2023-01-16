@@ -38,7 +38,6 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
     """
     Сериализатор ингридиента в рецепте.
     """
-    id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit')
@@ -62,7 +61,6 @@ class TagSerializer(serializers.ModelSerializer):
     """
     Сериализатор тега
     """
-    id = serializers.ReadOnlyField(source='pk')
     color = Hex2NameColor()
 
     class Meta:
@@ -86,7 +84,6 @@ class Base64ImageField(serializers.ImageField):
 
 
 class IngredientsEditSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
 
     class Meta:
         model = IngredientRecipe
@@ -171,7 +168,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     """
     Сериализатор рецепта.
     """
-    id = serializers.IntegerField(source='pk')
     author = UsersSerializer(read_only=True, many=False)
     ingredients = IngredientInRecipeSerializer(
         source='ingredientrecipe_set', many=True)
@@ -203,7 +199,6 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class CompactRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='pk')
 
     class Meta:
         model = Recipe
@@ -228,17 +223,3 @@ class SubscriptionsSerializers(UsersSerializer):
             "is_subscribed",
             "recipes"
         )
-
-
-class ShoppingCartSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор рецепта в корзине
-    """
-    sum_amount = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Ingredient
-        fields = ('id', 'name', 'sum_amount', 'measurement_unit')
-
-    def get_sum_amount(self, obj):
-        return obj.sum_amount

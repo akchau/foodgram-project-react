@@ -29,7 +29,6 @@ class UsersSerializer(serializers.ModelSerializer):
     """
     Список пользователей
     """
-    id = serializers.ReadOnlyField(source='pk')
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
