@@ -2,15 +2,30 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.db.utils import IntegrityError
 from django_filters.rest_framework import DjangoFilterBackend
+from django.http.response import HttpResponse
+from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .exceptions import NotFavorite, AlreadyFavorite, NotRules, NotInCart
-from .models import Tag, Ingridient, Recipe, UserFavoriteRecipes, UserShoppingCartRecipes, IngridientRecipe
-from .serializers import TagSerializer, IngridientSerializer, RecipeSerializer, IngridientInRecipeSerializer, ShoppingCartSerializer
+from .models import (
+    Tag,
+    Ingredient,
+    Recipe,
+    UserFavoriteRecipes,
+    UserShoppingCartRecipes
+)
+from .serializers import (
+    TagSerializer,
+    IngredientSerializer,
+    RecipeSerializer,
+    RecipeWriteSerializer
+)
 
 User = get_user_model()
+
+DATE_FORMAT = '%d-%m-%Y %H:%M'
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -18,6 +33,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('tags__slug', 'author')
+
+    def get_serializer_class(self):
+        if (
+            self.action == 'create' or
+            self.action == 'partial_update' or
+            self.action == 'update'
+        ):
+            return RecipeWriteSerializer
+        return RecipeSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
     def get_queryset(self):
         if self.request.query_params.get('is_in_shopping_cart') == '1':
@@ -101,17 +128,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         recipes = Recipe.objects.filter(users_shopping__user=request.user)
-        ingridients = Ingridient.objects.filter(
+        ingredients = Ingredient.objects.filter(
             recipe__in=recipes).annotate(
-                sum_amount=Sum('ingridientrecipe__amount')
+                sum_amount=Sum('ingredientrecipe__amount')
             )
-        serializer = ShoppingCartSerializer(ingridients, many=True)
-        return Response(serializer.data)
+        user = request.user
+        filename = f'{user.username}_buy_list.txt'
+        shopping_list = (
+            f'Список покупок для:\n\n{user.first_name} {user.last_name}\n'
+            f'{timezone.now().strftime(DATE_FORMAT)}\n'
+        )
+        for ing in ingredients:
+            shopping_list += (
+                f'{ing.name}: {ing.sum_amount} {ing.measurement_unit}\n'
+            )
+
+        shopping_list += '\nСоздано Foodgram'
+
+        response = HttpResponse(
+            shopping_list, content_type='text.txt; charset=utf-8'
+        )
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+        return response
 
 
-class IngridientViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Ingridient.objects.all()
-    serializer_class = IngridientSerializer
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

@@ -156,7 +156,7 @@ def token_view(request):
             return Response(
                 {"auth_error": 'Выдача токена запрещена'},
                 status.HTTP_403_FORBIDDEN
-        )
+            )
         return Response(
             {"auth_error": 'Неверный пароль'},
             status.HTTP_403_FORBIDDEN

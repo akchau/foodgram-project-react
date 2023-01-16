@@ -4,7 +4,7 @@ from django.db import models
 User = get_user_model()
 
 
-class Ingridient(models.Model):
+class Ingredient(models.Model):
     name = models.CharField(
         "Название",
         max_length=200,
@@ -63,9 +63,9 @@ class Recipe(models.Model):
         upload_to='recipes',
     )
     tags = models.ManyToManyField(Tag, through='TagRecipe')
-    ingridients = models.ManyToManyField(
-        Ingridient,
-        through='IngridientRecipe'
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='IngredientRecipe'
     )
 
     class Meta:
@@ -109,9 +109,9 @@ class TagRecipe(models.Model):
         unique_together = ('tag', 'recipe')
 
 
-class IngridientRecipe(models.Model):
-    ingridient = models.ForeignKey(
-        Ingridient,
+class IngredientRecipe(models.Model):
+    ingredient = models.ForeignKey(
+        Ingredient,
         on_delete=models.CASCADE,
         verbose_name="Ингридиент"
     )
@@ -123,13 +123,13 @@ class IngridientRecipe(models.Model):
     amount = models.SmallIntegerField("Количество")
 
     class Meta:
-        unique_together = ('ingridient', 'recipe')
+        unique_together = ('ingredient', 'recipe')
         verbose_name = "Ингридиент в рецепте"
         verbose_name_plural = "Ингридиенты в рецептах"
 
     def __str__(self):
-        return (f'{self.recipe}/{self.ingridient} '
-                f'{self.amount} {self.ingridient.measurement_unit}')
+        return (f'{self.recipe}/{self.ingredient} '
+                f'{self.amount} {self.ingredient.measurement_unit}')
 
 
 class UserFavoriteRecipes(models.Model):

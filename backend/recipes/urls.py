@@ -6,7 +6,7 @@ from rest_framework.routers import SimpleRouter
 
 from .views import (
     RecipeViewSet,
-    IngridientViewSet,
+    IngredientViewSet,
     TagViewSet,
 )
 
@@ -14,7 +14,7 @@ app_name = 'recipes'
 
 router = SimpleRouter()
 router.register(r'recipes', RecipeViewSet)
-router.register(r'ingredients', IngridientViewSet)
+router.register(r'ingredients', IngredientViewSet)
 router.register(r'tags', TagViewSet)
 
 urlpatterns = [
