@@ -120,7 +120,7 @@ class IngredientRecipe(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Рецепт"
     )
-    amount = models.SmallIntegerField("Количество")
+    amount = models.PositiveIntegerField("Количество")
 
     class Meta:
         unique_together = ('ingredient', 'recipe')
