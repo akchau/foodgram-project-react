@@ -84,6 +84,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class IngredientsEditSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
 
     class Meta:
         model = IngredientRecipe
@@ -126,7 +127,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     recipe=recipe,
                     ingredient=get_object_or_404(
                         Ingredient,
-                        id=ingr.get('id')),
+                        pk=ingr.get('id')),
                     amount=ingr.get('amount')
                 )
                 for ingr in ingredients
@@ -140,7 +141,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         recipe.tags.set(tags)
         IngredientRecipe.objects.filter(recipe=recipe).delete()
-        print('Пришли')
         IngredientRecipe.objects.bulk_create(
             [
                 IngredientRecipe(
