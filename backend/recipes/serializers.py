@@ -13,7 +13,7 @@ from .models import (
     UserFavoriteRecipes,
     UserShoppingCartRecipes,
 )
-from users.serializers import UsersSerializer
+from api.serializers import UsersSerializer
 import webcolors
 
 User = get_user_model()

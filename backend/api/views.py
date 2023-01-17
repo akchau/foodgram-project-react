@@ -15,8 +15,6 @@ from .exceptions import (
     AlreadyFollower,
     IncorrectPassword,
 )
-
-from .models import Subscribe
 from .serializers import (
     RegistrationSerializer,
     UsersSerializer,
@@ -24,6 +22,7 @@ from .serializers import (
     ChangePasswordSerializer,
 )
 from recipes.serializers import SubscriptionsSerializers
+from users.models import Subscribe
 
 
 User = get_user_model()

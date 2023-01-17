@@ -7,6 +7,7 @@ from .views import (
     subscribe,
     UserViewSet
 )
+
 app_name = 'users'
 
 router = SimpleRouter()

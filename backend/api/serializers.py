@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Subscribe
+from users.models import Subscribe
+
 
 User = get_user_model()
 
