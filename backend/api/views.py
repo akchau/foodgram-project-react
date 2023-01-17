@@ -32,13 +32,13 @@ from .serializers import (
     RecipeSerializer,
     RecipeWriteSerializer,
 )
+from .permissions import AuthorOrReadOnly
 from recipes.models import (
     Tag,
     Ingredient,
     Recipe,
     UserFavoriteRecipes,
     UserShoppingCartRecipes,
-
 )
 
 from users.models import Subscribe, User
@@ -236,6 +236,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('tags__slug', 'author')
+    permission_classes = (AuthorOrReadOnly,)
 
     def get_queryset(self):
         if self.request.query_params.get('is_in_shopping_cart') == '1':
