@@ -12,16 +12,14 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import AccessToken
 
-
 from .exceptions import (
     UserNotFound,
     NotFollower,
     AlreadyFollower,
     IncorrectPassword,
-    NotFavorite,
     AlreadyFavorite,
     NotRules,
-    NotInCart
+    AlreadyInCart
 )
 from .serializers import (
     RegistrationSerializer,
@@ -32,7 +30,7 @@ from .serializers import (
     TagSerializer,
     IngredientSerializer,
     RecipeSerializer,
-    RecipeWriteSerializer
+    RecipeWriteSerializer,
 )
 from recipes.models import (
     Tag,
@@ -274,22 +272,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
         methods=['post', 'delete'],
     )
     def shopping_cart(self, request, pk):
-        recipe = Recipe.objects.get(pk=pk)
+        recipe = get_object_or_404(Recipe, pk=pk)
+
         if request.method == "DELETE":
-            try:
-                obj = UserShoppingCartRecipes.objects.filter(
-                    user=request.user,
-                    recipe=recipe,
-                )
-                obj.delete()
-                return Response(status.HTTP_204_NO_CONTENT)
-            except UserShoppingCartRecipes.DoesNotExist:
-                raise NotInCart
+            get_object_or_404(
+                UserShoppingCartRecipes,
+                user=request.user,
+                recipe=recipe
+            ).delete()
+            return Response(status.HTTP_204_NO_CONTENT)
 
         elif request.method == "POST":
+            if UserShoppingCartRecipes.objects.filter(
+                    user=request.user,
+                    recipe=Recipe.objects.get(pk=pk)
+            ).exists():
+                raise AlreadyInCart
             UserShoppingCartRecipes.objects.create(
                 user=request.user,
-                recipe=Recipe.objects.get(pk=pk),
+                recipe=Recipe.objects.get(pk=pk)
             )
             serializer = RecipeSerializer(
                 recipe,
@@ -302,31 +303,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
         methods=['post', 'delete'],
     )
     def favorite(self, request, pk):
-        recipe = Recipe.objects.get(pk=pk)
+        recipe = get_object_or_404(Recipe, pk=pk)
         if request.method == "DELETE":
-            try:
-                obj = UserFavoriteRecipes.objects.get(
-                    user=request.user,
-                    recipe=recipe,
-                )
-                obj.delete()
-                return Response(status.HTTP_204_NO_CONTENT)
-            except UserFavoriteRecipes.DoesNotExist:
-                raise NotFavorite
+            get_object_or_404(
+                UserFavoriteRecipes,
+                user=request.user,
+                recipe=recipe
+            ).delete()
+            return Response(status.HTTP_204_NO_CONTENT)
 
         elif request.method == "POST":
-            try:
-                UserFavoriteRecipes.objects.create(
+            if UserFavoriteRecipes.objects.filter(
                     user=request.user,
                     recipe=Recipe.objects.get(pk=pk)
-                )
-                serializer = RecipeSerializer(
-                    recipe,
-                    context={'request': request}
-                )
-                return Response(serializer.data, status.HTTP_201_CREATED)
-            except IntegrityError:
+            ).exists():
                 raise AlreadyFavorite
+            UserFavoriteRecipes.objects.create(
+                user=request.user,
+                recipe=Recipe.objects.get(pk=pk)
+            )
+            serializer = RecipeSerializer(
+                recipe,
+                context={'request': request}
+            )
+            return Response(serializer.data, status.HTTP_201_CREATED)
 
     @action(
         detail=False,

@@ -168,6 +168,7 @@ class UserShoppingCartRecipes(models.Model):
     class Meta:
         verbose_name = "Рецепт в корзине"
         verbose_name_plural = "Рецепты в корзине"
+        unique_together = ('recipe', 'user')
 
     def __str__(self):
         return f'Рецепт - {self.recipe} в корзине у {self.user}'
