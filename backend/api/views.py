@@ -18,7 +18,6 @@ from .exceptions import (
     AlreadyFollower,
     IncorrectPassword,
     AlreadyFavorite,
-    NotRules,
     AlreadyInCart
 )
 from .serializers import (
@@ -263,8 +262,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, pk):
         instance = self.get_object()
-        if request.user != instance.author:
-            raise NotRules
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

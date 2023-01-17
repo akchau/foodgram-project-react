@@ -44,12 +44,6 @@ class NotInCart(APIException):
     default_code = 'errors'
 
 
-class NotRules(APIException):
-    status_code = status.HTTP_403_FORBIDDEN
-    default_detail = 'У вас недостаточно прав для выполнения данного действия.'
-    default_code = 'detail'
-
-
 class AlreadyInCart(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = 'Уже в корзине.'
