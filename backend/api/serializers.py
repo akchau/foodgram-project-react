@@ -170,17 +170,39 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             "image",
         )
 
-    def validate(self, data):
-        tags = data["tags"]
+    def validate_tags(self, value):
         tag_list = []
-        if not data["tags"]:
+        if not value:
             raise serializers.ValidationError('Теги обязательны для рецептов')
-        for items in tags:
+        for items in value:
             if items in tag_list:
                 raise serializers.ValidationError(
                     'Тег должен быть уникальным')
             tag_list.append(items)
+        return value
 
+    def validate_ingridients(self, value):
+        ingredient_list = []
+        if not value:
+            raise serializers.ValidationError(
+                'Ингридиенты обызательны для рецептов')
+        for items in value:
+            if items['id'] < 0:
+                raise serializers.ValidationError(
+                    'id не может быть отрицательным числом')
+            try:
+                print('Зашли')
+                ingredient = Ingredient.objects.get(id=items['id'])
+            except Ingredient.DoesNotExist:
+                raise serializers.ValidationError(
+                    'Такого ингридиента не существует')
+            if ingredient in ingredient_list:
+                raise serializers.ValidationError(
+                    'Ингридиент должен быть уникальным')
+            ingredient_list.append(ingredient)
+        return value
+
+    def validate(self, data):
         ingredients = data["ingredients"]
         ingredient_list = []
         if not data["ingredients"]:
