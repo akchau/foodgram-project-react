@@ -5,14 +5,19 @@ from .views import (
     token_view,
     set_password,
     subscribe,
-    UserViewSet
+    UserViewSet,
+    RecipeViewSet,
+    IngredientViewSet,
+    TagViewSet,
 )
 
 app_name = 'users'
 
 router = SimpleRouter()
 router.register(r'users', UserViewSet)
-
+router.register('recipes', RecipeViewSet)
+router.register('ingredients', IngredientViewSet)
+router.register('tags', TagViewSet)
 
 urlpatterns = [
     path('auth/token/login/', token_view),
