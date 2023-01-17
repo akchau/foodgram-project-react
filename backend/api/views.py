@@ -235,10 +235,20 @@ DATE_FORMAT = '%d-%m-%Y %H:%M'
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('tags__slug', 'author')
+
+    def get_queryset(self):
+        if self.request.query_params.get('is_in_shopping_cart') == '1':
+            return Recipe.objects.filter(
+                users_shopping__user=self.request.user
+            )
+        if self.request.query_params.get('is_favorited') == '1':
+            return Recipe.objects.filter(
+                users_favorite__user=self.request.user
+            )
+        return Recipe.objects.all()
 
     def get_serializer_class(self):
         if (
@@ -251,17 +261,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-    def get_queryset(self):
-        if self.request.query_params.get('is_in_shopping_cart') == '1':
-            return Recipe.objects.filter(
-                users_shopping__user=self.request.user
-            )
-        if self.request.query_params.get('is_favorited') == '1':
-            return Recipe.objects.filter(
-                users_favorite__user=self.request.user
-            )
-        return Recipe.objects.all()
 
     def destroy(self, request, pk):
         instance = self.get_object()

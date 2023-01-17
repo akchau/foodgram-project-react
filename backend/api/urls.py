@@ -14,10 +14,10 @@ from .views import (
 app_name = 'users'
 
 router = SimpleRouter()
-router.register('users', UserViewSet)
-router.register('recipes', RecipeViewSet)
-router.register('ingredients', IngredientViewSet)
-router.register('tags', TagViewSet)
+router.register('users', UserViewSet, basename='users')
+router.register('recipes', RecipeViewSet, basename='recipes')
+router.register('ingredients', IngredientViewSet, basename='ingridients')
+router.register('tags', TagViewSet, basename='tags')
 
 urlpatterns = [
     path('auth/token/login/', token_view),
