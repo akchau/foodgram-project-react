@@ -62,7 +62,7 @@ class Recipe(models.Model):
         "Картинка",
         upload_to='recipes',
     )
-    tags = models.ManyToManyField(Tag, through='TagRecipe')
+    tags = models.ManyToManyField(Tag)
     ingredients = models.ManyToManyField(
         Ingredient,
         through='IngredientRecipe'
