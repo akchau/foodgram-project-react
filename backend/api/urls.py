@@ -14,7 +14,7 @@ from .views import (
 app_name = 'users'
 
 router = SimpleRouter()
-router.register(r'users', UserViewSet)
+router.register('users', UserViewSet)
 router.register('recipes', RecipeViewSet)
 router.register('ingredients', IngredientViewSet)
 router.register('tags', TagViewSet)

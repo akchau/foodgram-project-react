@@ -148,7 +148,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'users.Custom_User'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

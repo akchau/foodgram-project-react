@@ -1,7 +1,6 @@
 import base64
 import webcolors
 
-from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
@@ -14,10 +13,7 @@ from recipes.models import (
     UserFavoriteRecipes,
     UserShoppingCartRecipes,
 )
-from users.models import Subscribe
-
-
-User = get_user_model()
+from users.models import Subscribe, User
 
 
 class RegistrationSerializer(serializers.ModelSerializer):

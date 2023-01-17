@@ -1,4 +1,3 @@
-from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.db.utils import IntegrityError
 
@@ -44,10 +43,7 @@ from recipes.models import (
 
 )
 
-from users.models import Subscribe
-
-
-User = get_user_model()
+from users.models import Subscribe, User
 
 
 def get_response(key):
@@ -338,6 +334,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         recipes = Recipe.objects.filter(users_shopping__user=request.user)
+        print(recipes)
         ingredients = Ingredient.objects.filter(
             recipe__in=recipes).annotate(
                 sum_amount=Sum('ingredientrecipe__amount')
