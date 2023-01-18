@@ -181,47 +181,21 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             tag_list.append(items)
         return value
 
-    def validate_ingridients(self, value):
+    def validate_ingredients(self, value):
         ingredient_list = []
         if not value:
             raise serializers.ValidationError(
                 'Ингридиенты обызательны для рецептов')
         for items in value:
-            if items['id'] < 0:
-                raise serializers.ValidationError(
-                    'id не может быть отрицательным числом')
-            try:
-                print('Зашли')
-                ingredient = Ingredient.objects.get(id=items['id'])
-            except Ingredient.DoesNotExist:
+            if not Ingredient.objects.filter(id=items['id']).exists():
                 raise serializers.ValidationError(
                     'Такого ингридиента не существует')
+            ingredient = Ingredient.objects.get(id=items['id'])
             if ingredient in ingredient_list:
                 raise serializers.ValidationError(
                     'Ингридиент должен быть уникальным')
             ingredient_list.append(ingredient)
         return value
-
-    def validate(self, data):
-        ingredients = data["ingredients"]
-        ingredient_list = []
-        if not data["ingredients"]:
-            raise serializers.ValidationError(
-                'Ингридиенты обызательны для рецептов')
-        for items in ingredients:
-            if items['id'] < 0:
-                raise serializers.ValidationError(
-                    'id не может быть отрицательным числом')
-            try:
-                ingredient = Ingredient.objects.get(id=items['id'])
-            except Ingredient.DoesNotExist:
-                raise serializers.ValidationError(
-                    'Такого ингридиента не существует')
-            if ingredient in ingredient_list:
-                raise serializers.ValidationError(
-                    'Ингридиент должен быть уникальным')
-            ingredient_list.append(ingredient)
-        return data
 
     def create(self, validated_data):
         """Создание рецепта."""
