@@ -10,7 +10,7 @@ from rest_framework import viewsets, status, mixins
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .exceptions import (
@@ -259,11 +259,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Recipe.objects.all()
 
     def get_serializer_class(self):
-        if (
-            self.action == 'create'
-            or self.action == 'partial_update'
-            or self.action == 'update'
-        ):
+        if self.request.method not in SAFE_METHODS:
             return RecipeWriteSerializer
         return RecipeSerializer
 
@@ -343,7 +339,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         recipes = Recipe.objects.filter(users_shopping__user=request.user)
-        print(recipes)
         ingredients = Ingredient.objects.filter(
             recipe__in=recipes).annotate(
                 sum_amount=Sum('ingredientrecipe__amount')
