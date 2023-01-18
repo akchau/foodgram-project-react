@@ -95,25 +95,6 @@ class Recipe(models.Model):
         ).exists()
 
 
-class TagRecipe(models.Model):
-    tag = models.ForeignKey(
-        Tag,
-        on_delete=models.CASCADE,
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-    )
-
-    def __str__(self):
-        return f'{self.tag.name}-{self.recipe.name}'
-
-    class Meta:
-        verbose_name = "Тег в рецепте"
-        verbose_name_plural = "Теги в рецепте"
-        unique_together = ('tag', 'recipe')
-
-
 class IngredientRecipe(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,

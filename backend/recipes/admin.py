@@ -6,8 +6,7 @@ from .models import (
     Recipe,
     IngredientRecipe,
     UserFavoriteRecipes,
-    UserShoppingCartRecipes,
-    TagRecipe,
+    UserShoppingCartRecipes
 )
 
 
@@ -18,9 +17,8 @@ class IngredientRecipeInline(admin.TabularInline):
 
 
 class TagRecipeInline(admin.TabularInline):
-    model = TagRecipe
-    min_num = 1
-    fields = ('tag',)
+    model = Recipe.tags.through
+    extra = 3
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -65,4 +63,3 @@ admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(IngredientRecipe)
 admin.site.register(UserFavoriteRecipes)
 admin.site.register(UserShoppingCartRecipes)
-admin.site.register(TagRecipe)
