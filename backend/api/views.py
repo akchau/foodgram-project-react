@@ -7,9 +7,10 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework import viewsets, status, mixins
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .exceptions import (
@@ -239,14 +240,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.query_params.get('is_in_shopping_cart') == '1':
-            return Recipe.objects.filter(
-                users_shopping__user=self.request.user
-            )
-        if self.request.query_params.get('is_favorited') == '1':
-            return Recipe.objects.filter(
-                users_favorite__user=self.request.user
-            )
-        return Recipe.objects.all()
+            if self.request.user.is_authenticated:
+                queryset = Recipe.objects.filter(
+                    users_shopping__user=self.request.user
+                )
+                return queryset
+            raise AuthenticationFailed(
+                detail="Доступно только авторизованным пользователем")
+        elif self.request.query_params.get('is_favorited') == '1':
+            if self.request.user.is_authenticated:
+                queryset = Recipe.objects.filter(
+                    users_favorite__user=self.request.user
+                )
+                return queryset
+            raise AuthenticationFailed(
+                detail="Доступно только авторизованным пользователем")
+        else:
+            return Recipe.objects.all()
 
     def get_serializer_class(self):
         if (
@@ -299,9 +309,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated]
     )
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
+
         if request.method == "DELETE":
             get_object_or_404(
                 UserFavoriteRecipes,
