@@ -170,6 +170,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             "image",
         )
 
+    def validate_cooking_time(self, value):
+        if value <= 1:
+            raise serializers.ValidationError(
+                    'Время готовки больше 1!')
+
     def validate_tags(self, value):
         tag_list = []
         if not value:
