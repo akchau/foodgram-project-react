@@ -171,9 +171,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def validate_cooking_time(self, value):
-        if value <= 1:
+        if value < 1:
             raise serializers.ValidationError(
                     'Время готовки больше 1!')
+        return value
 
     def validate_tags(self, value):
         tag_list = []
@@ -202,12 +203,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             ingredient_list.append(ingredient)
         return value
 
-    def create(self, validated_data):
-        """Создание рецепта."""
+    def creating(self, validated_data, recipe=None):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(**validated_data)
+        if not recipe:
+            recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
+        if IngredientRecipe.objects.filter(recipe=recipe).exists():
+            IngredientRecipe.objects.filter(recipe=recipe).delete()
         IngredientRecipe.objects.bulk_create(
             [
                 IngredientRecipe(
@@ -220,27 +223,16 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 for ingr in ingredients
             ]
         )
+        return recipe, validated_data
+
+    def create(self, validated_data):
+        """Создание рецепта."""
+        recipe, validated_data = self.creating(validated_data)
         return recipe
 
     def update(self, recipe, validated_data):
         """Обновление рецепта."""
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
-        recipe.tags.set(tags)
-        IngredientRecipe.objects.filter(recipe=recipe).delete()
-        IngredientRecipe.objects.bulk_create(
-            [
-                IngredientRecipe(
-                    recipe=recipe,
-                    ingredient=get_object_or_404(
-                        Ingredient,
-                        id=ingr.get('id')),
-                    amount=ingr.get('amount')
-                )
-                for ingr in ingredients
-            ]
-        )
-
+        recipe, validated_data = self.creating(validated_data, recipe)
         return super().update(recipe, validated_data)
 
     def to_representation(self, instance):
