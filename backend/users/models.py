@@ -32,13 +32,17 @@ class Subscribe(models.Model):
     follower = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name="Подписчик"
+        verbose_name="Подписчик",
+        null=True,
+        blank=True,
     )
     following = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name="Подписка",
-        related_name="follower"
+        related_name="follower",
+        null=True,
+        blank=True,
     )
 
     class Meta:
