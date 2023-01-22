@@ -291,3 +291,21 @@ class SubscriptionsSerializers(UsersSerializer):
             return Subscribe.objects.filter(
                 follower=request.user, following=obj).exists()
         return False
+
+
+class UserWithRecipesSerializer(UsersSerializer):
+    recipes = CompactRecipeSerializer(many=True)
+
+    class Meta:
+        model = User
+        fields = (
+            "email",
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "is_subscribed",
+            "password",
+            "recipes"
+        )
+        extra_kwargs = {'password': {'write_only': True}}

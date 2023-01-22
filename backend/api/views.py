@@ -28,7 +28,8 @@ from .serializers import (
     IngredientSerializer,
     RecipeSerializer,
     RecipeWriteSerializer,
-    CompactRecipeSerializer
+    CompactRecipeSerializer,
+    UserWithRecipesSerializer
 )
 from .permissions import AuthorOrReadOnly, AdminOrReadOnly, RecipePermissions, UserPermission
 from recipes.models import (
@@ -75,7 +76,7 @@ class UserViewSet(DjoserUserViewSet):
     )
     def subscriptions(self, request):
         """Подписки пользователя."""
-        following = request.user.following_set
+        subscribes = Subscribe
         page = self.paginate_queryset(following)
         if page is not None:
             serializer = SubscriptionsSerializers(
@@ -128,7 +129,7 @@ class UserViewSet(DjoserUserViewSet):
                     follower=request.user,
                     following=following,
                 )
-                serializer = UsersSerializer(
+                serializer = UserWithRecipesSerializer(
                     following,
                     context={'request': request}
                 )
