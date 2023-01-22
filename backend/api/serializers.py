@@ -263,12 +263,14 @@ class CompactRecipeSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
+            "image",
             "cooking_time",
         )
 
 
 class SubscriptionsSerializers(UsersSerializer):
     recipes = CompactRecipeSerializer(read_only=True, many=True)
+    recipes_cout = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -279,5 +281,13 @@ class SubscriptionsSerializers(UsersSerializer):
             "first_name",
             "last_name",
             "is_subscribed",
-            "recipes"
+            "recipes",
         )
+
+    def get_is_subscribed(self, obj):
+        """Метод добавляет поле is_subscribed в ответ."""
+        request = self.context.get("request")
+        if request.user.is_authenticated:
+            return Subscribe.objects.filter(
+                follower=request.user, following=obj).exists()
+        return False

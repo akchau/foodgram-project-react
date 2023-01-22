@@ -17,6 +17,33 @@ class AuthorOrReadOnly(permissions.BasePermission):
         return False
 
 
+class RecipePermissions(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if view.action == 'list' or view.action == 'retrieve':
+            return True
+        if view.action == 'create' and request.user.is_authenticated:
+            return True
+        if request.user.is_authenticated or request.user.is_staff:
+            return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        if request.user == obj.author or request.method in permissions.SAFE_METHODS:
+            return True
+        if request.user.is_staff:
+            return True
+        return False
+
+
+class UserPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if view.action == 'list' or view.action == 'create' or view.action == 'retrieve':
+            return True
+        if request.user.is_authenticated or request.user.is_staff:
+            return True
+        return False
+
+
 class AdminAuthorOrReadOnly(permissions.IsAuthenticatedOrReadOnly):
     """Permission на уровне объекта, чтобы разрешить редактирование
     только автору объекта, администратору или модератору"""
