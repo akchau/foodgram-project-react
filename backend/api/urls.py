@@ -8,6 +8,7 @@ from .views import (
     TagViewSet,
 )
 
+
 app_name = 'users'
 
 router = SimpleRouter()
