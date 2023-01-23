@@ -1,38 +1,37 @@
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.db.utils import IntegrityError
-
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework import viewsets, status, mixins
+from djoser.views import UserViewSet as DjoserUserViewSet
+from rest_framework.decorators import action
+from rest_framework import viewsets, status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
+from urllib.parse import unquote
+
 
 from .exceptions import (
     UserNotFound,
     NotFollower,
     AlreadyFollower,
-    IncorrectPassword,
     AlreadyFavorite,
     AlreadyInCart
 )
 from .serializers import (
-    RegistrationSerializer,
     UsersSerializer,
-    GetTokenSerializer,
-    ChangePasswordSerializer,
     SubscriptionsSerializers,
     TagSerializer,
     IngredientSerializer,
     RecipeSerializer,
     RecipeWriteSerializer,
+    CompactRecipeSerializer,
+    UserWithRecipesSerializer
 )
-from .permissions import AuthorOrReadOnly
+from .permissions import AuthorOrReadOnly, AdminOrReadOnly, RecipePermissions, UserPermission
 from recipes.models import (
     Tag,
     Ingredient,
@@ -67,12 +66,29 @@ def get_response(key):
     return JSONRenderer().render(keys[key])
 
 
-class UserViewSet(viewsets.GenericViewSet,
-                  mixins.ListModelMixin,
-                  mixins.CreateModelMixin,
-                  mixins.RetrieveModelMixin):
-    queryset = User.objects.all()
+class UserViewSet(DjoserUserViewSet):
     serializer_class = UsersSerializer
+    permission_classes = (UserPermission,)
+
+    @action(
+        detail=False,
+        permission_classes=[IsAuthenticated]
+    )
+    def subscriptions(self, request):
+        """Подписки пользователя."""
+        subscribes = Subscribe
+        page = self.paginate_queryset(following)
+        if page is not None:
+            serializer = SubscriptionsSerializers(
+                page,
+                many=True,
+                context={'request': request}
+            )
+            return self.get_paginated_response(serializer.data)
+        serializer = SubscriptionsSerializers(
+            following, many=True, context={'request': request}
+        )
+        return Response(serializer.data)
 
     @action(
         detail=False,
@@ -87,23 +103,39 @@ class UserViewSet(viewsets.GenericViewSet,
         return Response(serializer.data, status.HTTP_200_OK)
 
     @action(
-        detail=False,
+        methods=['post', 'delete'],
+        detail=True,
     )
-    def subscriptions(self, request):
-        """Подписки пользователя."""
-        followings = User.objects.filter(following=request.user)
-        page = self.paginate_queryset(followings)
-        if page is not None:
-            serializer = SubscriptionsSerializers(
-                page,
-                many=True,
-                context={'request': request}
-            )
-            return self.get_paginated_response(serializer.data)
-        serializer = SubscriptionsSerializers(
-            followings, many=True, context={'request': request}
-        )
-        return Response(serializer.data)
+    def subscribe(self, request, id):
+        try:
+            following = User.objects.get(pk=id)
+        except User.DoesNotExist:
+            raise UserNotFound
+
+        if request.method == "DELETE":
+            try:
+                obj = Subscribe.objects.get(
+                    follower=request.user,
+                    following=following,
+                )
+                obj.delete()
+                return Response(status.HTTP_204_NO_CONTENT)
+            except Subscribe.DoesNotExist:
+                raise NotFollower
+
+        elif request.method == "POST":
+            try:
+                Subscribe.objects.create(
+                    follower=request.user,
+                    following=following,
+                )
+                serializer = UserWithRecipesSerializer(
+                    following,
+                    context={'request': request}
+                )
+                return Response(serializer.data, status.HTTP_201_CREATED)
+            except IntegrityError:
+                raise AlreadyFollower
 
     def create(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -133,100 +165,13 @@ class UserViewSet(viewsets.GenericViewSet,
         )
         return Response(serializer.data)
 
-    def retrieve(self, request, pk):
+    def retrieve(self, request, id):
         try:
-            user = User.objects.get(pk=pk)
+            user = User.objects.get(pk=id)
             serializer = UsersSerializer(user, context={'request': request})
         except User.DoesNotExist:
             raise UserNotFound
         return Response(serializer.data, status.HTTP_200_OK)
-
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return RegistrationSerializer
-        return UsersSerializer
-
-    def get_permissions(self):
-        if self.action == 'list' or self.action == 'create':
-            return (AllowAny(),)
-        return super().get_permissions()
-
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def token_view(request):
-    """
-    Получение токена авторизации.
-    """
-    user_serializer = GetTokenSerializer(data=request.data)
-    user_serializer.is_valid(raise_exception=True)
-    email = user_serializer.validated_data['email']
-    password = user_serializer.validated_data['password']
-    user = get_object_or_404(User, email=email)
-    if user.check_password(password) and user.is_active:
-        token = AccessToken.for_user(user)
-        return Response({"auth_token": str(token)}, status.HTTP_200_OK)
-    else:
-        if not user.is_active:
-            return Response(
-                {"auth_error": 'Выдача токена запрещена'},
-                status.HTTP_403_FORBIDDEN
-            )
-        return Response(
-            {"auth_error": 'Неверный пароль'},
-            status.HTTP_403_FORBIDDEN
-        )
-
-
-@api_view(['POST'])
-def set_password(request):
-    """
-    Функция изменения пароля
-    """
-    password_serializer = ChangePasswordSerializer(data=request.data)
-    password_serializer.is_valid(raise_exception=True)
-    new_password = password_serializer.validated_data['new_password']
-    current_password = password_serializer.validated_data['current_password']
-    user = request.user
-    if user.check_password(current_password):
-        user.set_password(new_password)
-        user.save()
-        return Response(password_serializer.data, status.HTTP_204_NO_CONTENT)
-    raise IncorrectPassword
-
-
-@api_view(['POST', 'DELETE'])
-def subscribe(request, id):
-    """Функция подписки на пользователя"""
-    try:
-        following = User.objects.get(pk=id)
-    except User.DoesNotExist:
-        raise UserNotFound
-
-    if request.method == "DELETE":
-        try:
-            obj = Subscribe.objects.get(
-                follower=request.user,
-                following=following,
-            )
-            obj.delete()
-            return Response(status.HTTP_204_NO_CONTENT)
-        except Subscribe.DoesNotExist:
-            raise NotFollower
-
-    elif request.method == "POST":
-        try:
-            Subscribe.objects.create(
-                follower=request.user,
-                following=following,
-            )
-            serializer = UsersSerializer(
-                following,
-                context={'request': request}
-            )
-            return Response(serializer.data, status.HTTP_201_CREATED)
-        except IntegrityError:
-            raise AlreadyFollower
 
 
 DATE_FORMAT = '%d-%m-%Y %H:%M'
@@ -236,7 +181,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('tags__slug', 'author')
-    permission_classes = (AuthorOrReadOnly,)
+    permission_classes = (RecipePermissions,)
 
     def get_queryset(self):
         if self.request.query_params.get('is_in_shopping_cart') == '1':
@@ -274,6 +219,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated]
     )
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
@@ -309,13 +255,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
-
         if request.method == "DELETE":
-            get_object_or_404(
-                UserFavoriteRecipes,
-                user=request.user,
-                recipe=recipe
-            ).delete()
+            try:
+                get_object_or_404(
+                    UserFavoriteRecipes,
+                    user=request.user,
+                    recipe=recipe
+                ).delete()
+            except:
+                return Response({"errors": "Не в избранном."})
             return Response(status.HTTP_204_NO_CONTENT)
 
         elif request.method == "POST":
@@ -323,12 +271,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     user=request.user,
                     recipe=Recipe.objects.get(pk=pk)
             ).exists():
-                raise AlreadyFavorite
+                return Response({"errors": "Уже в избранном."})
             UserFavoriteRecipes.objects.create(
                 user=request.user,
                 recipe=Recipe.objects.get(pk=pk)
             )
-            serializer = RecipeSerializer(
+            serializer = CompactRecipeSerializer(
                 recipe,
                 context={'request': request}
             )
@@ -336,6 +284,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
+        permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
         recipes = Recipe.objects.filter(users_shopping__user=request.user)
@@ -366,8 +315,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    permission_classes = (AdminOrReadOnly,)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+
+    def get_queryset(self):
+        """Получает queryset в соответствии с параметрами запроса."""
+        name = self.request.query_params.get('name')
+        queryset = self.queryset
+        if name:
+            if name[0] == '%':
+                name = unquote(name)
+            name = name.lower()
+            stw_queryset = queryset.filter(
+                Q(name__startswith=name) & Q(name__contains=name))
+            return stw_queryset
+        return queryset

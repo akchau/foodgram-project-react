@@ -13,26 +13,7 @@ from recipes.models import (
     UserFavoriteRecipes,
     UserShoppingCartRecipes,
 )
-from users.models import Subscribe, User
-
-
-class RegistrationSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для регистрации
-    """
-    id = serializers.ReadOnlyField(source='pk')
-    password = serializers.CharField(write_only=True)
-
-    class Meta:
-        model = User
-        fields = (
-            "username",
-            "password",
-            "id",
-            "email",
-            "first_name",
-            "last_name",
-        )
+from users.models import User, Subscribe
 
 
 class UsersSerializer(serializers.ModelSerializer):
@@ -50,7 +31,9 @@ class UsersSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "is_subscribed",
+            "password",
         )
+        extra_kwargs = {'password': {'write_only': True}}
 
     def get_is_subscribed(self, obj):
         """Метод добавляет поле is_subscribed в ответ."""
@@ -60,21 +43,17 @@ class UsersSerializer(serializers.ModelSerializer):
                 follower=request.user, following=obj).exists()
         return False
 
-
-class GetTokenSerializer(serializers.Serializer):
-    """
-    Запрос токена
-    """
-    email = serializers.EmailField()
-    password = serializers.CharField(max_length=150)
-
-
-class ChangePasswordSerializer(serializers.Serializer):
-    """
-    Смена пороля
-    """
-    new_password = serializers.CharField(max_length=150)
-    current_password = serializers.CharField(max_length=150)
+    def create(self, validated_data):
+        """ Создание нового пользователя"""
+        user = User(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -284,12 +263,14 @@ class CompactRecipeSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
+            "image",
             "cooking_time",
         )
 
 
 class SubscriptionsSerializers(UsersSerializer):
     recipes = CompactRecipeSerializer(read_only=True, many=True)
+    recipes_cout = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -300,5 +281,31 @@ class SubscriptionsSerializers(UsersSerializer):
             "first_name",
             "last_name",
             "is_subscribed",
+            "recipes",
+        )
+
+    def get_is_subscribed(self, obj):
+        """Метод добавляет поле is_subscribed в ответ."""
+        request = self.context.get("request")
+        if request.user.is_authenticated:
+            return Subscribe.objects.filter(
+                follower=request.user, following=obj).exists()
+        return False
+
+
+class UserWithRecipesSerializer(UsersSerializer):
+    recipes = CompactRecipeSerializer(many=True)
+
+    class Meta:
+        model = User
+        fields = (
+            "email",
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "is_subscribed",
+            "password",
             "recipes"
         )
+        extra_kwargs = {'password': {'write_only': True}}
