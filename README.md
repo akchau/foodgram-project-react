@@ -15,8 +15,3 @@ docker-compose exec backend python manage.py collectstatic --no-input
 ```http
 http://localhost/api/docs/redoc.html
 ```
-
-
-
-
-
