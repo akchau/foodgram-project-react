@@ -17,5 +17,5 @@ docker-compose exec backend python manage.py collectstatic --no-input
 ```
 3. Спецификация api доступна по адресу
 ```http
-http://localhost/api/docs/redoc.html
+http://51.250.70.35/api/docs/redoc.html
 ```
