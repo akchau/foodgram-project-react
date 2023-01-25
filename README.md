@@ -1,4 +1,5 @@
 # Foodgram
+![.github/workflows/main.yml](https://github.com/akchau/foodgram-project-react/actions/workflows/workflow.yml/badge.svg)
 
 
 1. Чтобы развернуть проект зайдите в папку /infra и выполните команду запуска фоновой сборки.
