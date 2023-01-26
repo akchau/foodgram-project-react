@@ -70,25 +70,25 @@ class UserViewSet(DjoserUserViewSet):
     serializer_class = UsersSerializer
     permission_classes = (UserPermission,)
 
-    @action(
-        detail=False,
-        permission_classes=[IsAuthenticated]
-    )
-    def subscriptions(self, request):
-        """Подписки пользователя."""
-        subscribes = Subscribe
-        page = self.paginate_queryset(following)
-        if page is not None:
-            serializer = SubscriptionsSerializers(
-                page,
-                many=True,
-                context={'request': request}
-            )
-            return self.get_paginated_response(serializer.data)
-        serializer = SubscriptionsSerializers(
-            following, many=True, context={'request': request}
-        )
-        return Response(serializer.data)
+    #@action(
+    #    detail=False,
+    #    permission_classes=[IsAuthenticated]
+    #)
+    #def subscriptions(self, request):
+        #"""Подписки пользователя."""
+        #subscribes = Subscribe
+        #page = self.paginate_queryset(following)
+        #if page is not None:
+            #serializer = SubscriptionsSerializers(
+            #    page,
+            #    many=True,
+            #    context={'request': request}
+            #)
+            #return self.get_paginated_response(serializer.data)
+        #serializer = SubscriptionsSerializers(
+        #    following, many=True, context={'request': request}
+        #)
+        #return Response(serializer.data)
 
     @action(
         detail=False,

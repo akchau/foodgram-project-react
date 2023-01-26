@@ -82,17 +82,21 @@ class Recipe(models.Model):
 
     @property
     def is_favorited(self, request):
-        return UserFavoriteRecipes.objects.get(
-            recipe=self,
-            user=request.user,
-        ).exists()
+        if request.user.is_authenticated:
+            return UserFavoriteRecipes.objects.get(
+                recipe=self,
+                user=request.user
+            ).exists()
+        return False
 
     @property
     def is_in_shopping_cart(self, request):
-        return UserShoppingCartRecipes.objects.get(
-            recipe=self,
-            user=request.user,
-        ).exists()
+        if request.user.is_authenticated:
+            return UserShoppingCartRecipes.objects.get(
+                recipe=self,
+                user=request.user,
+            ).exists()
+        return False
 
 
 class IngredientRecipe(models.Model):
