@@ -272,7 +272,7 @@ class CompactRecipeSerializer(serializers.ModelSerializer):
 
 class SubscriptionsSerializers(UsersSerializer):
     recipes = CompactRecipeSerializer(read_only=True, many=True)
-    recipes_cout = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -284,6 +284,7 @@ class SubscriptionsSerializers(UsersSerializer):
             "last_name",
             "is_subscribed",
             "recipes",
+            "recipes_count"
         )
 
     def get_is_subscribed(self, obj):
@@ -293,6 +294,9 @@ class SubscriptionsSerializers(UsersSerializer):
             return Subscribe.objects.filter(
                 follower=request.user, following=obj).exists()
         return False
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj).count()
 
 
 class UserWithRecipesSerializer(UsersSerializer):
