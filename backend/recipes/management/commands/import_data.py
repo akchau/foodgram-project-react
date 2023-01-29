@@ -5,7 +5,8 @@ from django.core.management.base import BaseCommand
 from recipes.models import Ingredient
 
 TABLES_DICT = {
-    Ingredient: 'ingredients.csv'}
+    Ingredient: 'ingredients.csv'
+}
 
 
 class Command(BaseCommand):
@@ -17,7 +18,6 @@ class Command(BaseCommand):
                 f'{settings.BASE_DIR}/static/data/{base}',
                 'r', encoding='UTF-8'
             ) as csv_file:
-                reader = csv.DictReader(csv_file)
-                model.objects.bulk_create(model(**data) for data in reader)
-
-        self.stdout.write(self.style.SUCCESS('Данные успешно загружены'))
+                reader = csv.reader(csv_file)
+                [model.objects.create(name=data[0], measurement_unit=data[1]) for data in reader]
+        self.stdout.write(self.style.SUCCESS('Данные ингридиентов успешно загружены'))
