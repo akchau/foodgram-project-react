@@ -224,7 +224,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     """
-    Сериализатор рецепта.
+    Сериализатор рецепта
     """
     author = UsersSerializer(read_only=True, many=False)
     ingredients = IngredientInRecipeSerializer(
