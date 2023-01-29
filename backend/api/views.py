@@ -18,7 +18,6 @@ from .exceptions import (
     UserNotFound,
     NotFollower,
     AlreadyFollower,
-    AlreadyFavorite,
     AlreadyInCart
 )
 from .serializers import (
@@ -31,7 +30,8 @@ from .serializers import (
     CompactRecipeSerializer,
     UserWithRecipesSerializer
 )
-from .permissions import AuthorOrReadOnly, AdminOrReadOnly, RecipePermissions, UserPermission
+from .paginators import PagePagination
+from .permissions import AdminOrReadOnly, RecipePermissions, UserPermission
 from recipes.models import (
     Tag,
     Ingredient,
@@ -69,6 +69,7 @@ def get_response(key):
 class UserViewSet(DjoserUserViewSet):
     serializer_class = UsersSerializer
     permission_classes = (UserPermission,)
+    pagination_class = PagePagination
 
     @action(
         detail=False,
@@ -182,6 +183,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('tags__slug', 'author')
     permission_classes = (RecipePermissions,)
+    pagination_class = PagePagination
 
     def get_queryset(self):
         if self.request.query_params.get('is_in_shopping_cart') == '1':
@@ -262,7 +264,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     user=request.user,
                     recipe=recipe
                 ).delete()
-            except:
+            except UserFavoriteRecipes.DoesNotExist:
                 return Response({"errors": "Не в избранном."})
             return Response(status.HTTP_204_NO_CONTENT)
 
@@ -317,11 +319,6 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = (AdminOrReadOnly,)
 
-
-class TagViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Tag.objects.all()
-    serializer_class = TagSerializer
-
     def get_queryset(self):
         """Получает queryset в соответствии с параметрами запроса."""
         name = self.request.query_params.get('name')
@@ -334,3 +331,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
                 Q(name__startswith=name) & Q(name__contains=name))
             return stw_queryset
         return queryset
+
+
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer

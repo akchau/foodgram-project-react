@@ -19,5 +19,10 @@ class Command(BaseCommand):
                 'r', encoding='UTF-8'
             ) as csv_file:
                 reader = csv.reader(csv_file)
-                [model.objects.create(name=data[0], measurement_unit=data[1]) for data in reader]
-        self.stdout.write(self.style.SUCCESS('Данные ингридиентов успешно загружены'))
+                [model.objects.create(
+                    name=data[0],
+                    measurement_unit=data[1]
+                ) for data in reader]
+        self.stdout.write(
+            self.style.SUCCESS('Данные ингридиентов успешно загружены')
+        )
