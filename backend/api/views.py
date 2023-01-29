@@ -87,9 +87,9 @@ class UserViewSet(DjoserUserViewSet):
             )
             return self.get_paginated_response(serializer.data)
         serializer = SubscriptionsSerializers(
-            following, many=True, context={'request': request}
+            page, many=True, context={'request': request}
         )
-        return Response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
     @action(
         detail=False,
@@ -186,6 +186,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = PagePagination
 
     def get_queryset(self):
+        tags = self.request.query_params.getlist('tags')
+        if tags:
+            queryset = Recipe.objects.filter(
+                tags__slug__in=tags).distinct()
+            return queryset
         if self.request.query_params.get('is_in_shopping_cart') == '1':
             if self.request.user.is_authenticated:
                 queryset = Recipe.objects.filter(
