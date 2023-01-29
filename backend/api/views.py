@@ -186,11 +186,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = PagePagination
 
     def get_queryset(self):
-        tags = self.request.query_params.getlist('tags')
-        if tags:
-            queryset = Recipe.objects.filter(
-                tags__slug__in=tags).distinct()
-            return queryset
         if self.request.query_params.get('is_in_shopping_cart') == '1':
             if self.request.user.is_authenticated:
                 queryset = Recipe.objects.filter(
@@ -208,6 +203,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             raise AuthenticationFailed(
                 detail="Доступно только авторизованным пользователем")
         else:
+            tags = self.request.query_params.getlist('tags')
+            if tags:
+                queryset = Recipe.objects.filter(
+                    tags__slug__in=tags).distinct()
+                return queryset
             return Recipe.objects.all()
 
     def get_serializer_class(self):
