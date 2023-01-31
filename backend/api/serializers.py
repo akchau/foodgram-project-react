@@ -276,7 +276,7 @@ class CompactRecipeSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionsSerializers(UsersSerializer):
-    recipes = CompactRecipeSerializer(read_only=True, many=True)
+    recipes = serializers.SerializerMethodField(read_only=True)
     recipes_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -302,6 +302,14 @@ class SubscriptionsSerializers(UsersSerializer):
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
+
+    def get_recipes(self, obj):
+        recipes = obj.recipes
+        request = self.context.get("request")
+        recipes_limit = int(request.query_params.get('recipes_limit'))
+        recipes = recipes.filter().order_by('-pub_date')[:recipes_limit]
+        serializer = CompactRecipeSerializer(recipes, many=True)
+        return serializer.data
 
 
 class UserWithRecipesSerializer(UsersSerializer):
