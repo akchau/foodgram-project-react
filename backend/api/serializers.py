@@ -180,6 +180,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Ингридиент должен быть уникальным')
             ingredient_list.append(ingredient)
+            if items['amount'] == 0:
+                raise serializers.ValidationError(
+                    'Количество укажите количество больше 0')
         return value
 
     def creating(self, validated_data, recipe=None):
