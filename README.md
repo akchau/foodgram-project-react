@@ -1,3 +1,5 @@
+[Перейти к остальным проектам](https://github.com/akchau/akchau/blob/main/README.md#проекты)
+
 # Foodgram
 ![.github/workflows/main.yml](https://github.com/akchau/foodgram-project-react/actions/workflows/workflow.yml/badge.svg)
 
@@ -20,3 +22,5 @@ docker-compose exec backend python manage.py collectstatic --no-input
 ```http
 http://51.250.70.35/api/docs/redoc.html
 ```
+
+[Перейти к остальным проектам](https://github.com/akchau/akchau/blob/main/README.md#проекты)
